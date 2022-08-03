@@ -46,24 +46,53 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-io.on('connection',(socket)=>{
+io.on('connection',(data)=>{
     
-    socket.on('subscribe', function(room) { 
+  data.on('subscribe', function(room) { 
         console.log('joining room', room.channel);
-        socket.join(room.channel); 
+        data.join(room.channel); 
     })
   
-    socket.on('disconnect', () => {
+    data.on('disconnect', () => {
         console.log('user disconnected');
     });
 
-    socket.on('chitmaymay',(msg)=>{
-      const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,sender_name:msg.sender_name,sender_conv_key:msg.sender_conv_key,receive_id:msg.receive_id,receive_name:msg.receive_name,receive_conv_key:msg.receive_conv_key,conversation_key:msg.conversation_key,created_at:msg.created_at };
-      connection.query('INSERT INTO messages SET ?', msgdata, (err, res) => {
-        if(err) throw err;
+    data.on('chitmaymay',(msg)=>{
+      let conv_key = "";
+      if(msg.conversation_key){
+         conv_key = msg.conversation_key;
+      }else{
+        var min = 100000000;
+        var max = 999999999;
+        var rmint =  Math.floor(Math.random() * (max - min)) + min;
+        let key = "CHAT_" + rmint;
+        var conv = {
+          start_user:msg.sender_id,end_user:msg.receive_id,conv_key:key
+        };
+        connection.query('INSERT INTO chat_conversations SET ?', conv, (err, res) => {
+          if(err) throw err;
+        
+           conv_key = res.conv_key;
+        });
+      }
       
-        io.in(msg.receive_conv_key).emit('chitmaymay', msg);
-      });
+     
+      if(msg.chat_type == 'group'){
+        const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,sender_name:msg.sender_name,sender_conv_key:msg.sender_conv_key,group_id:msg.receive_id,group_name:msg.receive_name,group_conv_key:msg.receive_conv_key };
+        connection.query('INSERT INTO message_groups SET ?', msgdata, (err, res) => {
+          if(err) throw err;
+        
+          io.in(msg.receive_conv_key).emit('chitmaymay', msg);
+        });
+      }else{
+        const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,sender_name:msg.sender_name,sender_conv_key:msg.sender_conv_key,receive_id:msg.receive_id,receive_name:msg.receive_name,receive_conv_key:msg.receive_conv_key,conversation_key:conv_key };
+        connection.query('INSERT INTO messages SET ?', msgdata, (err, res) => {
+          if(err) throw err;
+        
+          io.in(msg.receive_conv_key).emit('chitmaymay', msg);
+        });
+      }
+      
 
        
       
