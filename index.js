@@ -58,7 +58,29 @@ io.on('connection',(data)=>{
     });
 
     data.on('chitmaymay',(msg)=>{
-      let conv_key = "";
+      
+      
+     
+      if(msg.chat_type == 'group'){
+        const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,group_id:msg.receive_id };
+        connection.query('INSERT INTO message_groups SET ?', msgdata, (err, res) => {
+          if(err) throw err;
+        
+          io.in(msg.receive_conv_key).emit('chitmaymay', msg);
+        });
+        const query = 'UPDATE `groups` '+
+                  'SET `last_message` = ?, `last_time` = ? ' +
+                  'WHERE `id` = ?';
+        const values = [msg.message, msg.created_at, msg.receive_id];
+
+        connection.query(query, values, (error, result) => {  // sends queries
+                                        // closes connection
+            if (error) throw error;
+              // UPDATE `users` 
+        });  
+        
+      }else{
+        let conv_key = "";
       if(msg.conversation_key){
          conv_key = msg.conversation_key;
       }else{
@@ -75,16 +97,6 @@ io.on('connection',(data)=>{
            conv_key = res.conv_key;
         });
       }
-      
-     
-      if(msg.chat_type == 'group'){
-        const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,sender_name:msg.sender_name,sender_conv_key:msg.sender_conv_key,group_id:msg.receive_id,group_name:msg.receive_name,group_conv_key:msg.receive_conv_key };
-        connection.query('INSERT INTO message_groups SET ?', msgdata, (err, res) => {
-          if(err) throw err;
-        
-          io.in(msg.receive_conv_key).emit('chitmaymay', msg);
-        });
-      }else{
         const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,sender_name:msg.sender_name,sender_conv_key:msg.sender_conv_key,receive_id:msg.receive_id,receive_name:msg.receive_name,receive_conv_key:msg.receive_conv_key,conversation_key:conv_key };
         connection.query('INSERT INTO messages SET ?', msgdata, (err, res) => {
           if(err) throw err;
