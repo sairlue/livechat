@@ -45,7 +45,9 @@ const io = new Server(server,{
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
-
+app.get('/enduser', (req, res) => {
+  res.sendFile(__dirname + '/enduser.html');
+});
 io.on('connection',(data)=>{
     
   data.on('subscribe', function(room) { 
@@ -81,23 +83,35 @@ io.on('connection',(data)=>{
         
       }else{
         let conv_key = "";
-      if(msg.conversation_key){
-         conv_key = msg.conversation_key;
-      }else{
-        var min = 100000000;
-        var max = 999999999;
-        var rmint =  Math.floor(Math.random() * (max - min)) + min;
-        let key = "CHAT_" + rmint;
-        var conv = {
-          start_user:msg.sender_id,end_user:msg.receive_id,conv_key:key
-        };
-        connection.query('INSERT INTO chat_conversations SET ?', conv, (err, res) => {
-          if(err) throw err;
-        
-           conv_key = res.conv_key;
-        });
-      }
-        const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,sender_name:msg.sender_name,sender_conv_key:msg.sender_conv_key,receive_id:msg.receive_id,receive_name:msg.receive_name,receive_conv_key:msg.receive_conv_key,conversation_key:conv_key };
+        if(msg.conversation_key){
+          conv_key = msg.conversation_key;
+        }else{
+          var min = 100000000;
+          var max = 999999999;
+          var rmint =  Math.floor(Math.random() * (max - min)) + min;
+          let key = "CHAT_" + rmint;
+          var conv = {
+            start_user:msg.sender_id,end_user:msg.receive_id,conv_key:key
+          };
+           conv_key = key;
+          connection.query('INSERT INTO chat_conversations SET ?', conv, (err, res) => {
+            if(err) throw err;
+          
+            
+          });
+        }
+        const query = 'UPDATE `chat_conversations` '+
+                  'SET `last_message` = ?, `last_time` = ? ' +
+                  'WHERE `conv_key` = ?';
+        const values = [msg.message, msg.created_at, conv_key];
+
+        connection.query(query, values, (error, result) => {  // sends queries
+                                        // closes connection
+            if (error) throw error;
+              // UPDATE `users` 
+        });  
+
+        const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,receive_id:msg.receive_id,conversation_key:conv_key };
         connection.query('INSERT INTO messages SET ?', msgdata, (err, res) => {
           if(err) throw err;
         
