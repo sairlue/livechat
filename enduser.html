@@ -23,7 +23,23 @@
 
     <script src="/socket.io/socket.io.js"></script>
 <script>
-  var socket = io();
+  
+  const socket = io(`http://localhost:3000`, {
+    'transports': ['websocket', 'polling'],
+      'reconnection':true,
+      'reconnectionDelay':1000,
+      auth: {
+        token: "chitmaymay@2022"
+      }
+      });
+      socket.on('connect',(data)=>{
+          
+          console.log('connect with chat');
+            
+      });
+      socket.on("connect_error", (err) => {
+        console.log(err.message); // prints the message associated with the error
+      });
   var form = document.getElementById('form');
   var input = document.getElementById('input');
 
@@ -35,14 +51,16 @@ var strDate = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " "
       let msg = {
         message:input.value,
         message_type:'text',
-        chat_type:'user',
-        sender_id:'14',
+        chat_type:'group',
+        reply_messageid:0,
+        reply_message:'',
+        sender_id:'15',
         sender_name:'zaw myo',
         sender_img:"https://chitmaymay.s3.ap-southeast-1.amazonaws.com/upload/62bd6aa41d4a3.jpg",
-        sender_conv_key:'CUS_220625836274',
-        receive_id:'15',
+        sender_conv_key:'CUS_220623203121',
+        receive_id:'14',
         receive_name:'Kyaw soe',
-        receive_conv_key:'CUS_220623203131',
+        receive_conv_key:'CUS_220625836274',
         conversation_key:"CHAT_349649980",
         created_at:strDate
       }
@@ -51,9 +69,19 @@ var strDate = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " "
       input.value = '';
     }
   });
-  socket.emit('subscribe', {channel:'CUS_220801102355'});
+  socket.emit('subscribe', {channel:'CUS_220623203121'});
   socket.on('chitmaymay', function(msg) {
    
+    let unRead = {
+              'group_id':0,
+              'sender_id':msg.receive_id,
+              'conv_key':msg.conversation_key,
+              'is_admin':0,
+              'chat_type':msg.chat_type
+            };
+    
+            socket.emit('chitmaymay.unread', unRead);
+
     var item = document.createElement('li');
     item.textContent = msg.message;
     messages.appendChild(item);
