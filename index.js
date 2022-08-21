@@ -103,52 +103,25 @@ io.on('connection',(data)=>{
             if (error) throw error;
               // UPDATE `users` 
         });  
-        // create for unread msg
-        // const checkQuery = "SELECT `unread_count` FROM message_customer_reads WHERE `conv_key` = ? AND `user_id` = ?";
-        // const checkV = [msg.receive_conv_key,msg.receive_id];
-        // connection.query(checkQuery,checkV, (err, res) => {
-        //     if(err) throw err;
-        //     if(res.length == 0){
-        //       const unreadData = { user_id: msg.receive_id, conv_key:msg.conversation_key,chat_type:msg.chat_type,unread_count:0 };
-        //       connection.query('INSERT INTO message_customer_reads SET ?', unreadData, (err, res) => {
-        //         if(err) throw err;
-                
-                
-        //       });
-        //     }
-        // });
+       
         
       }else{ // chat by user one by one
         let conv_key = "";
         if(msg.conversation_key){
           conv_key = msg.conversation_key;
-        }else{
-          var min = 100000000;
-          var max = 999999999;
-          var rmint =  Math.floor(Math.random() * (max - min)) + min;
-          let key = "CHAT_" + rmint;
-          var conv = {
-            start_user:msg.sender_id,end_user:msg.receive_id,conv_key:key
-          };
-           conv_key = key;
-           //insert conversation key
-          connection.query('INSERT INTO chat_conversations SET ?', conv, (err, res) => {
-            if(err) throw err;
           
-            
-          });
-        }
-        const query = 'UPDATE `chat_conversations` '+
-                  'SET `last_message` = ?, `last_time` = ? ' +
-                  'WHERE `conv_key` = ?';
-        const values = [msg.message, msg.created_at, conv_key];
-        //update chat conversation key
-        connection.query(query, values, (error, result) => {  // sends queries
-                                        // closes connection
-            if (error) throw error;
-              // UPDATE `users` 
-        });  
-        //create unread msg 
+          const query = 'UPDATE `chat_conversations` '+
+          'SET `last_message` = ?, `last_time` = ? ' +
+          'WHERE `conv_key` = ?';
+          const values = [msg.message, msg.created_at, conv_key];
+          //update chat conversation key
+          connection.query(query, values, (error, result) => {  // sends queries
+                                          // closes connection
+              if (error) throw error;
+                // UPDATE `users` 
+          });  
+
+           //create unread msg 
         const checkQuery = "SELECT `unread_count` FROM message_customer_reads WHERE `conv_key` = ? AND `user_id` = ?";
         const checkV = [conv_key,msg.receive_id];
         connection.query(checkQuery,checkV, (err, res) => {
@@ -162,13 +135,132 @@ io.on('connection',(data)=>{
               });
             }
         });
-        // insert send message data
-        const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,receive_id:msg.receive_id,conversation_key:conv_key };
+        //add msg 
+          const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,receive_id:msg.receive_id,conversation_key:conv_key };
         connection.query('INSERT INTO messages SET ?', msgdata, (err, res) => {
           if(err) throw err;
         
           io.in(msg.receive_conv_key).emit('chitmaymay', msg);
         });
+        }else{
+          var min = 100000000;
+          var max = 999999999;
+          var rmint =  Math.floor(Math.random() * (max - min)) + min;
+          let key = "CHAT_" + rmint;
+          
+           conv_key = key;
+           //check has or not conversation key
+           const checkQuery = "SELECT * FROM chat_conversations WHERE `start_user` = ? AND `end_user` = ?";
+        const checkV = [msg.sender_id,msg.receive_id];
+        connection.query(checkQuery,checkV, (err, res) => {
+            if(err) throw err;
+            
+            if(res.length > 0){
+              let startMsg = {
+                message:msg.message,
+                message_type:msg.message_type,
+                chat_type:msg.chat_type,
+                reply_messageid:msg.reply_messageid,
+                reply_message:msg.reply_message,
+                sender_id:msg.sender_id,
+                sender_name:msg.sender_name,
+                sender_img:msg.sender_img,
+                sender_conv_key:msg.sender_conv_key,
+                receive_id:msg.receive_id,
+                receive_name:msg.receive_name,
+                receive_conv_key:msg.receive_conv_key,
+                conversation_key:res[0].conv_key,
+                created_at:msg.created_at
+              }
+              const query = 'UPDATE `chat_conversations` '+
+              'SET `last_message` = ?, `last_time` = ? ' +
+                        'WHERE `start_user` = ? AND `end_user` = ?';
+              const values = [msg.message, msg.created_at,msg.sender_id,msg.receive_id,];
+              //update chat conversation key
+              connection.query(query, values, (error, result) => {  // sends queries
+                                              // closes connection
+                  if (error) throw error;
+                    // UPDATE `users` 
+              });  
+
+               //create unread msg 
+               let unreadConv_key = res[0].conv_key;
+        const checkQuery = "SELECT `unread_count` FROM message_customer_reads WHERE `conv_key` = ? AND `user_id` = ?";
+        const checkV = [unreadConv_key,msg.receive_id];
+        connection.query(checkQuery,checkV, (err, res) => {
+            if(err) throw err;
+            if(res.length == 0){
+              
+              const unreadData = { user_id: msg.receive_id, conv_key:unreadConv_key,chat_type:msg.chat_type,unread_count:0 };
+              connection.query('INSERT INTO message_customer_reads SET ?', unreadData, (err, res) => {
+                if(err) throw err;
+                
+                
+              });
+            }
+        });
+
+              const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,receive_id:msg.receive_id,conversation_key:res[0].conv_key };
+              connection.query('INSERT INTO messages SET ?', msgdata, (err, res) => {
+                if(err) throw err;
+              
+                io.in(msg.receive_conv_key).emit('chitmaymay', startMsg);
+              });
+
+            }else{
+              let startMsg = {
+                message:msg.message,
+                message_type:msg.message_type,
+                chat_type:msg.chat_type,
+                reply_messageid:msg.reply_messageid,
+                reply_message:msg.reply_message,
+                sender_id:msg.sender_id,
+                sender_name:msg.sender_name,
+                sender_img:msg.sender_img,
+                sender_conv_key:msg.sender_conv_key,
+                receive_id:msg.receive_id,
+                receive_name:msg.receive_name,
+                receive_conv_key:msg.receive_conv_key,
+                conversation_key:conv_key,
+                created_at:msg.created_at
+              }
+              var conv = {
+                start_user:msg.sender_id,end_user:msg.receive_id,conv_key:key,last_message:msg.message,last_time:msg.created_at
+              };
+               //insert conversation key
+              connection.query('INSERT INTO chat_conversations SET ?', conv, (err, res) => {
+                if(err) throw err;
+              
+                
+              });
+               //create unread msg 
+        const checkQuery = "SELECT `unread_count` FROM message_customer_reads WHERE `conv_key` = ? AND `user_id` = ?";
+        const checkV = [conv_key,msg.receive_id];
+        connection.query(checkQuery,checkV, (err, res) => {
+            if(err) throw err;
+            if(res.length == 0){
+              const unreadData = { user_id: msg.receive_id, conv_key:conv_key,chat_type:msg.chat_type,unread_count:0 };
+              connection.query('INSERT INTO message_customer_reads SET ?', unreadData, (err, res) => {
+                if(err) throw err;
+                
+                
+              });
+            }
+        });
+              const msgdata = { message: msg.message, message_type:msg.message_type,sender_id:msg.sender_id,receive_id:msg.receive_id,conversation_key:conv_key };
+              connection.query('INSERT INTO messages SET ?', msgdata, (err, res) => {
+                if(err) throw err;
+              
+                io.in(msg.receive_conv_key).emit('chitmaymay', startMsg);
+              });
+            }
+        });
+          
+        }
+       
+       
+        // insert send message data
+        
       }
       
 
@@ -180,14 +272,14 @@ io.on('connection',(data)=>{
         var conv_key="";
         if(msg.chat_type == "user"){ //add unread count to table
 
-            conv_key = msg.conversation_key;
+            conv_key = msg.conv_key;
         
         
           const checkQuery = "SELECT `unread_count` FROM message_customer_reads WHERE `conv_key` = ? AND `user_id` = ?";
           const checkV = [conv_key,msg.receive_id];
           connection.query(checkQuery,checkV, (err, res) => {
               if(err) throw err;
-              
+             
               if(res.length > 0){ //insert start unread count
                 var unread = res[0].unread_count;
                 unread += 1;
@@ -200,15 +292,8 @@ io.on('connection',(data)=>{
                 connection.query(query, values, (error, result) => {  // sends queries
                                                 // closes connection
                     if (error) throw error;
-                    console.log('update done');
+                    
                 }); 
-              }else{
-                const msgdata = { user_id: msg.receive_id, conv_key:conv_key,chat_type:msg.chat_type,unread_count:1 };
-                connection.query('INSERT INTO message_customer_reads SET ?', msgdata, (err, res) => {
-                  if(err) throw err;
-                  
-                  
-                });
               }
             
           }); 
@@ -234,7 +319,7 @@ io.on('connection',(data)=>{
                                                   // closes connection
                       if (error) throw error;
                       
-                      console.log(result);
+                      //console.log(result);
                   }); 
                 }
               
@@ -281,7 +366,16 @@ io.on('connection',(data)=>{
             //console.log(result);
           });  
         }else{
-
+          const query = 'UPDATE `message_customer_reads` '+
+          'SET `unread_count` = ? ' +
+          'WHERE `user_id` = ? AND `conv_key` = ?';
+          let unread = 0;
+          const values = [unread, msg.sender_id, msg.conv_key];
+          //console.log(msg);
+          connection.query(query, values, (error, result) => {  // sends queries
+            if (error) throw error;
+            //console.log(result);
+          });  
         }
     });
 });
