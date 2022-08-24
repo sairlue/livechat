@@ -279,11 +279,9 @@ io.on('connection',(data)=>{
         
         
           const checkQuery = "SELECT `unread_count` FROM message_customer_reads WHERE `conv_key` = ? AND `user_id` = ?";
-<<<<<<< HEAD
+
           const checkV = [conv_key,msg.sender_id];
-=======
-          const checkV = [conv_key,msg.receive_id];
->>>>>>> d74fa66e0630ab2a753d97fd20fc0a8d8ff4329a
+
           connection.query(checkQuery,checkV, (err, res) => {
               if(err) throw err;
              
@@ -294,11 +292,9 @@ io.on('connection',(data)=>{
                   'SET `unread_count` = ? ' +
                   'WHERE `user_id` = ? AND `conv_key` = ?';
 
-<<<<<<< HEAD
+
                 const values = [unread, msg.sender_id, conv_key];
-=======
-                const values = [unread, msg.receive_id, conv_key];
->>>>>>> d74fa66e0630ab2a753d97fd20fc0a8d8ff4329a
+
 
                 connection.query(query, values, (error, result) => {  // sends queries
                                                 // closes connection
