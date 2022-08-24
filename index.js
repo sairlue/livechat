@@ -65,9 +65,11 @@ io.use((socket, next) => {
   return next(new Error('authentication error'));
 });
 
-
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+  res.send("node app run");
+});
+app.get('/startuser', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
 });
 app.get('/enduser', (req, res) => {
   res.sendFile(__dirname + '/enduser.html');
@@ -175,7 +177,7 @@ io.on('connection',(data)=>{
               const query = 'UPDATE `chat_conversations` '+
               'SET `last_message` = ?, `last_time` = ? ' +
                         'WHERE `start_user` = ? AND `end_user` = ?';
-              const values = [msg.message, msg.created_at,msg.sender_id,msg.receive_id,];
+              const values = [msg.message, msg.created_at,msg.sender_id,msg.receive_id];
               //update chat conversation key
               connection.query(query, values, (error, result) => {  // sends queries
                                               // closes connection
@@ -276,7 +278,7 @@ io.on('connection',(data)=>{
         
         
           const checkQuery = "SELECT `unread_count` FROM message_customer_reads WHERE `conv_key` = ? AND `user_id` = ?";
-          const checkV = [conv_key,msg.receive_id];
+          const checkV = [conv_key,msg.sender_id];
           connection.query(checkQuery,checkV, (err, res) => {
               if(err) throw err;
              
@@ -287,7 +289,7 @@ io.on('connection',(data)=>{
                   'SET `unread_count` = ? ' +
                   'WHERE `user_id` = ? AND `conv_key` = ?';
 
-                const values = [unread, msg.receive_id, conv_key];
+                const values = [unread, msg.sender_id, conv_key];
 
                 connection.query(query, values, (error, result) => {  // sends queries
                                                 // closes connection
