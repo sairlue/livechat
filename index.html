@@ -58,15 +58,25 @@ var strDate = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " "
         sender_conv_key:'CUS_220625836274',
         reply_messageid:0,
         reply_message:'',
-        receive_id:'15',
+        receive_id:'20',
         receive_name:'zaw myo',
-        receive_conv_key:'CUS_220623203121',
-        conversation_key:"CHAT_602550605",
+        receive_conv_key:'GRP_220805095150',
+        conversation_key:"CHAT_349649980",
         created_at:strDate
       }
       //socket.emit('chitmaymay', input.value);
       socket.emit('chitmaymay', msg);
-      input.value = '';
+
+      let readMsg = {
+              'group_id':20,
+              'sender_id':14,
+              'conv_key':'CHAT_349649980',
+              'is_admin':0,
+              'chat_type':'group'
+            };
+    
+            socket.emit('chitmaymay.read', readMsg);
+            input.value = '';
     }
   });
   socket.emit('subscribe', {channel:'CUS_220625836274'});
