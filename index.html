@@ -80,12 +80,13 @@ var strDate = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " "
     }
   });
   socket.emit('subscribe', {channel:'CUS_220625836274'});
+  
   socket.on('chitmaymay', function(msg) {
     console.log('user msg');
     console.log(msg);
     let unRead = {
               'group_id':0,
-              'receive_id':msg.receive_id,
+              'sender_id':msg.receive_id,
               'conv_key':msg.conversation_key,
               'is_admin':0,
               'chat_type':msg.chat_type
