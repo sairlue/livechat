@@ -6,18 +6,18 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const port = process.env.PORT || 3000;
 
-const mysql = require('mysql');
-const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
-});
+// const mysql = require('mysql');
+// const connection = mysql.createConnection({
+//   host: process.env.DB_HOST,
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD,
+//   database: process.env.DB_NAME
+// });
 
-connection.connect((err) => {
-  if (err) throw err;
-  console.log('Connected!');
-});
+// connection.connect((err) => {
+//   if (err) throw err;
+//   console.log('Connected!');
+// });
 // connection.query('SELECT * FROM customers', (err,rows) => {
 //   if(err) throw err;
 
