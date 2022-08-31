@@ -75,6 +75,9 @@ app.get('/startuser', (req, res) => {
 app.get('/enduser', (req, res) => {
   res.sendFile(__dirname + '/enduser.html');
 });
+app.get('/groupuser', (req, res) => {
+  res.sendFile(__dirname + '/groupuser.html');
+});
 io.on('connection',(data)=>{
     
   data.on('subscribe', function(room) { 
